@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+*.db
+venv/
+env/
+node_modules/
+build/
+dist/
+*.log
+.DS_Store
+audio_responses/
+.venv
