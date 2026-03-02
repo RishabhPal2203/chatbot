@@ -1,15 +1,61 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.env
-*.db
+*.pyc
+.Python
 venv/
 env/
+.venv/
+ENV/
+
+# Environment variables
+.env
+.env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio files (generated at runtime)
+audio_responses/
+*.mp3
+*.wav
+
+# Node.js
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# React build
 build/
 dist/
+.cache/
+
+# Logs
 *.log
+logs/
+
+# OS
 .DS_Store
-audio_responses/
-.venv
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Docker
+*.pid
+*.seed
+*.pid.lock

@@ -18,6 +18,6 @@ class SpeechService:
     def text_to_speech(self, text: str) -> str:
         filename = f"{uuid.uuid4()}.mp3"
         filepath = os.path.join(self.audio_dir, filename)
-        tts = gTTS(text=text, lang='en')
+        tts = gTTS(text=text, lang='en', slow=False, lang_check=False)
         tts.save(filepath)
         return filepath

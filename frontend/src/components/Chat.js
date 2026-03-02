@@ -16,6 +16,23 @@ const Chat = () => {
   const audioChunksRef = useRef([]);
   const audioRef = useRef(null);
 
+  const formatText = (text) => {
+    if (!text || typeof text !== 'string') return '';
+    
+    const txt = document.createElement('textarea');
+    txt.innerHTML = text;
+    let decoded = txt.value.replace(/\\n/g, '\n');
+    
+    decoded = decoded
+      .replace(/^## (.+)$/gm, '<h3 class="message-heading">$1</h3>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/^• (.+)$/gm, '<div class="bullet-item"><span class="bullet">•</span><span>$1</span></div>')
+      .replace(/^- (.+)$/gm, '<div class="bullet-item"><span class="bullet">•</span><span>$1</span></div>')
+      .replace(/^(\d+)\. (.+)$/gm, '<div class="numbered-item"><span class="number">$1.</span><span>$2</span></div>');
+    
+    return decoded;
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -37,6 +54,8 @@ const Chat = () => {
       const botMessage = {
         text: response.response,
         sender: 'bot',
+        intent: response.intent,
+        confidence: response.confidence,
         audioUrl: null
       };
       const messageIndex = messages.length + 1;
@@ -166,7 +185,10 @@ const Chat = () => {
         {messages.map((msg, idx) => (
           <div key={idx} className={`message ${msg.sender}`}>
             <div className="message-content">
-              <p>{msg.text}</p>
+              <div 
+                className="formatted-text"
+                dangerouslySetInnerHTML={{ __html: formatText(msg.text) }}
+              />
               {msg.sender === 'bot' && (
                 <div className="audio-controls">
                   {isSpeaking && currentAudioIndex === idx ? (

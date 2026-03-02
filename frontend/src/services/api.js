@@ -32,7 +32,7 @@ export const transcribeAudio = async (audioBlob) => {
 };
 
 export const sendChatMessage = async (message, sessionId) => {
-  const response = await axios.post(`${API_BASE_URL}/api/chat`, {
+  const response = await axios.post(`${API_BASE_URL}/chat/text`, {
     message,
     session_id: sessionId
   });
@@ -44,6 +44,13 @@ export const textToSpeech = async (text) => {
     { text },
     { responseType: 'blob' }
   );
+  return response.data;
+};
+
+export const generateConversationTitle = async (firstMessage) => {
+  const response = await axios.post(`${API_BASE_URL}/chat/generate-title`, {
+    message: firstMessage
+  });
   return response.data;
 };
 

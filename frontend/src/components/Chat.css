@@ -68,6 +68,75 @@
   word-wrap: break-word;
 }
 
+.formatted-text {
+  line-height: 1.6;
+}
+
+.formatted-text p {
+  margin: 8px 0;
+}
+
+.formatted-text .message-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 12px 0 8px 0;
+  color: #333;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  padding-bottom: 4px;
+}
+
+.message.user .formatted-text .message-heading {
+  color: white;
+  border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.formatted-text .numbered-item {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+  align-items: flex-start;
+}
+
+.formatted-text .numbered-item .number {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 24px;
+  flex-shrink: 0;
+}
+
+.message.user .formatted-text .numbered-item .number {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.formatted-text .bullet-item {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+  align-items: flex-start;
+}
+
+.formatted-text .bullet-item .bullet {
+  color: #667eea;
+  font-size: 18px;
+  line-height: 1.4;
+  min-width: 16px;
+  flex-shrink: 0;
+}
+
+.message.user .formatted-text .bullet-item .bullet {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.formatted-text strong {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.message.user .formatted-text strong {
+  color: white;
+  text-decoration: underline;
+}
+
 .message-content .audio-controls {
   display: flex;
   gap: 8px;

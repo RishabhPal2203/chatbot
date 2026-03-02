@@ -1,16 +1,54 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database.config import get_db
 from services.chat_service import ChatService
 from services.speech_service import SpeechService
+from services.title_service import TitleGenerationService
 from utils.schemas import TextChatRequest, ChatResponse
+from pydantic import BaseModel
 import uuid
 import os
 import shutil
+import json
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 chat_service = ChatService()
 speech_service = SpeechService()
+title_service = TitleGenerationService()
+
+class TitleRequest(BaseModel):
+    message: str
+
+class TitleResponse(BaseModel):
+    title: str
+
+@router.post("/generate-title", response_model=TitleResponse)
+def generate_title(request: TitleRequest):
+    """Generate a conversation title from the first message"""
+    title = title_service.generate_title(request.message)
+    return TitleResponse(title=title)
+
+@router.post("/stream")
+async def stream_chat(request: TextChatRequest, db: Session = Depends(get_db)):
+    session_id = request.session_id or str(uuid.uuid4())
+    
+    async def generate():
+        full_response = ""
+        try:
+            async for chunk in chat_service.stream_message(request.message, session_id):
+                full_response += chunk
+                yield f"data: {json.dumps({'token': chunk})}\n\n"
+            
+            # Save to database after streaming completes
+            intent = chat_service.detect_intent(request.message)
+            chat_service.save_conversation(request.message, full_response, intent, session_id, db)
+            
+            yield f"data: {json.dumps({'done': True, 'session_id': session_id})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 @router.post("/text", response_model=ChatResponse)
 def text_chat(request: TextChatRequest, db: Session = Depends(get_db)):
