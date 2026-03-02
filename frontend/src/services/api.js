@@ -21,6 +21,32 @@ export const sendVoiceMessage = async (audioBlob, sessionId) => {
   return response.data;
 };
 
+export const transcribeAudio = async (audioBlob) => {
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'audio.webm');
+  
+  const response = await axios.post(`${API_BASE_URL}/api/transcribe`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const sendChatMessage = async (message, sessionId) => {
+  const response = await axios.post(`${API_BASE_URL}/api/chat`, {
+    message,
+    session_id: sessionId
+  });
+  return response.data;
+};
+
+export const textToSpeech = async (text) => {
+  const response = await axios.post(`${API_BASE_URL}/api/tts`, 
+    { text },
+    { responseType: 'blob' }
+  );
+  return response.data;
+};
+
 export const getAnalytics = async () => {
   const response = await axios.get(`${API_BASE_URL}/analytics/summary`);
   return response.data;

@@ -83,7 +83,7 @@ python -m spacy download en_core_web_sm
 
 # Run backend
 cd backend
-python main.py
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Backend will run on `http://localhost:8000`

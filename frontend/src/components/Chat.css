@@ -12,6 +12,33 @@
   color: white;
   padding: 20px;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.status-badge {
+  font-size: 14px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  animation: pulse 1.5s infinite;
+}
+
+.status-badge.recording {
+  background: rgba(255, 0, 0, 0.3);
+  animation: pulse-red 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
 }
 
 .chat-messages {
@@ -39,6 +66,39 @@
   padding: 12px 16px;
   border-radius: 18px;
   word-wrap: break-word;
+}
+
+.message-content .audio-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-start;
+}
+
+.message-content .control-btn {
+  background: rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  color: #667eea;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.message-content .control-btn:hover {
+  background: rgba(102, 126, 234, 0.3);
+  transform: scale(1.05);
+}
+
+.message-content .control-btn.stop {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.4);
+  color: #dc3545;
+}
+
+.message-content .control-btn.stop:hover {
+  background: rgba(220, 53, 69, 0.3);
 }
 
 .message.user .message-content {
@@ -84,19 +144,59 @@
   padding: 20px;
   background: white;
   border-top: 1px solid #ddd;
+  gap: 10px;
+}
+
+.mic-btn {
+  padding: 12px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.mic-btn:hover {
+  background: #218838;
+  transform: scale(1.05);
+}
+
+.mic-btn.recording {
+  background: #dc3545;
+  animation: pulse-mic 1s infinite;
+}
+
+.mic-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+@keyframes pulse-mic {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+  50% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
 }
 
 .chat-input input {
   flex: 1;
-  padding: 12px;
+  padding: 12px 20px;
   border: 1px solid #ddd;
   border-radius: 25px;
   font-size: 14px;
   outline: none;
 }
 
+.chat-input input:disabled {
+  background: #f5f5f5;
+}
+
 .chat-input button {
-  margin-left: 10px;
   padding: 12px 30px;
   background: #667eea;
   color: white;
