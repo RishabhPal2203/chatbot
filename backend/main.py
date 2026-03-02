@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database.config import engine, Base
-from routes import chat, analytics
+from routes import chat, analytics, voice
 import logging
 import os
 from dotenv import load_dotenv
@@ -23,10 +23,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,6 +37,7 @@ app.mount("/audio", StaticFiles(directory="audio_responses"), name="audio")
 
 app.include_router(chat.router)
 app.include_router(analytics.router)
+app.include_router(voice.router)
 
 @app.get("/")
 def root():
