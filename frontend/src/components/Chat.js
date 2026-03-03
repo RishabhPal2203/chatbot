@@ -1,124 +1,88 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { transcribeAudio, sendChatMessage, textToSpeech } from '../services/api';
+import StreamingChatClient from '../services/StreamingChatClient';
 import './Chat.css';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentAudioIndex, setCurrentAudioIndex] = useState(null);
+  const [currentResponse, setCurrentResponse] = useState('');
+  const [audioLatency, setAudioLatency] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-  const audioRef = useRef(null);
+  const streamingClientRef = useRef(null);
 
-  const formatText = (text) => {
-    if (!text || typeof text !== 'string') return '';
+  // Initialize streaming client
+  useEffect(() => {
+    streamingClientRef.current = new StreamingChatClient(
+      (token) => {
+        // Handle streaming text tokens
+        setCurrentResponse(prev => prev + token);
+      },
+      () => {
+        // Text complete - finalize message
+        const botMessage = {
+          text: currentResponse,
+          sender: 'bot',
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, botMessage]);
+        setCurrentResponse('');
+        setLoading(false);
+        setIsProcessing(false);
+      },
+      () => {
+        // Audio complete
+        setIsSpeaking(false);
+        const latency = streamingClientRef.current.getAudioLatency();
+        setAudioLatency(latency);
+      }
+    );
     
-    const txt = document.createElement('textarea');
-    txt.innerHTML = text;
-    let decoded = txt.value.replace(/\\n/g, '\n');
+    streamingClientRef.current.connect();
     
-    decoded = decoded
-      .replace(/^## (.+)$/gm, '<h3 class="message-heading">$1</h3>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/^• (.+)$/gm, '<div class="bullet-item"><span class="bullet">•</span><span>$1</span></div>')
-      .replace(/^- (.+)$/gm, '<div class="bullet-item"><span class="bullet">•</span><span>$1</span></div>')
-      .replace(/^(\d+)\. (.+)$/gm, '<div class="numbered-item"><span class="number">$1.</span><span>$2</span></div>');
-    
-    return decoded;
-  };
+    return () => {
+      streamingClientRef.current?.disconnect();
+    };
+  }, [currentResponse]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(scrollToBottom, [messages, currentResponse]);
 
   const handleSend = async (text = input) => {
-    if (!text.trim()) return;
+    if (!text.trim() || isProcessing) return;
 
-    const userMessage = { text, sender: 'user' };
+    // Stop any currently playing audio
+    stopAudio();
+
+    const userMessage = { text, sender: 'user', timestamp: Date.now() };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
+    setIsProcessing(true);
+    setCurrentResponse('');
 
-    try {
-      const response = await sendChatMessage(text, sessionId);
-      if (!sessionId) setSessionId(response.session_id);
-
-      const botMessage = {
-        text: response.response,
-        sender: 'bot',
-        intent: response.intent,
-        confidence: response.confidence,
-        audioUrl: null
-      };
-      const messageIndex = messages.length + 1;
-      setMessages(prev => [...prev, botMessage]);
-      
-      // Auto-play TTS
-      await playTTS(response.response, messageIndex);
-    } catch (error) {
-      setMessages(prev => [...prev, { text: 'Error: Could not connect to server', sender: 'bot' }]);
-    } finally {
-      setLoading(false);
-    }
+    // Send via WebSocket for streaming response
+    streamingClientRef.current?.sendMessage(text);
   };
 
-  const playTTS = async (text, messageIndex) => {
-    try {
-      setIsSpeaking(true);
-      setIsPaused(false);
-      setCurrentAudioIndex(messageIndex);
-      const audioBlob = await textToSpeech(text);
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      if (audioRef.current) {
-        audioRef.current.src = audioUrl;
-        await audioRef.current.play();
-      }
-    } catch (error) {
-      console.error('TTS error:', error);
-      setIsSpeaking(false);
-      setCurrentAudioIndex(null);
-    }
+  const playAudio = async (text, messageIdx) => {
+    if (isSpeaking) return;
+    setIsSpeaking(true);
+    // Request audio streaming on-demand
+    streamingClientRef.current?.requestAudio(text);
   };
 
   const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsSpeaking(false);
-      setIsPaused(false);
-      setCurrentAudioIndex(null);
-    }
-  };
-
-  const togglePauseAudio = () => {
-    if (audioRef.current) {
-      if (isPaused) {
-        audioRef.current.play();
-        setIsPaused(false);
-      } else {
-        audioRef.current.pause();
-        setIsPaused(true);
-      }
-    }
-  };
-
-  const replayAudio = (messageIndex) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play();
-      setIsSpeaking(true);
-      setIsPaused(false);
-      setCurrentAudioIndex(messageIndex);
-    }
+    streamingClientRef.current?.stopAudio();
+    setIsSpeaking(false);
   };
 
   const startRecording = async () => {
@@ -152,19 +116,11 @@ const Chat = () => {
   };
 
   const handleVoiceInput = async (audioBlob) => {
-    setLoading(true);
-    try {
-      console.log('Audio blob size:', audioBlob.size);
-      const transcription = await transcribeAudio(audioBlob);
-      console.log('Transcription:', transcription);
-      setInput(transcription.text);
-      await handleSend(transcription.text);
-    } catch (error) {
-      console.error('Transcription error:', error);
-      alert(`Transcription failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
+    // Placeholder for voice transcription
+    // Replace with actual transcription service
+    const mockTranscription = "Hello, I need help with my order";
+    setInput(mockTranscription);
+    await handleSend(mockTranscription);
   };
 
   const toggleRecording = () => {
@@ -178,34 +134,38 @@ const Chat = () => {
   return (
     <div className="chat-container">
       <div className="chat-header">
-        <h2>☁️ Cloud Contact Center Assistant</h2>
-        {isRecording && <span className="status-badge recording">🎤 Listening...</span>}
+        <h2>☁️ Streaming AI Assistant</h2>
+        <div className="status-indicators">
+          {isRecording && <span className="status-badge recording">🎤 Listening...</span>}
+          {isSpeaking && <span className="status-badge speaking">🔊 Speaking</span>}
+          {audioLatency && <span className="latency-badge">Latency: {audioLatency.toFixed(0)}ms</span>}
+        </div>
       </div>
       <div className="chat-messages">
         {messages.map((msg, idx) => (
           <div key={idx} className={`message ${msg.sender}`}>
             <div className="message-content">
-              <div 
-                className="formatted-text"
-                dangerouslySetInnerHTML={{ __html: formatText(msg.text) }}
-              />
+              <div className="message-text">{msg.text}</div>
               {msg.sender === 'bot' && (
-                <div className="audio-controls">
-                  {isSpeaking && currentAudioIndex === idx ? (
-                    <>
-                      <button className="control-btn" onClick={togglePauseAudio}>
-                        {isPaused ? '▶️' : '⏸️'}
-                      </button>
-                      <button className="control-btn stop" onClick={stopAudio}>⏹️</button>
-                    </>
-                  ) : (
-                    <button className="control-btn" onClick={() => replayAudio(idx)}>🔊</button>
-                  )}
-                </div>
+                <button 
+                  className="audio-play-btn" 
+                  onClick={() => playAudio(msg.text, idx)}
+                  disabled={isSpeaking}
+                >
+                  {isSpeaking ? '🔊' : '▶️'}
+                </button>
               )}
             </div>
           </div>
         ))}
+        {currentResponse && (
+          <div className="message bot streaming">
+            <div className="message-content">
+              <div className="message-text">{currentResponse}</div>
+              <div className="streaming-indicator">●</div>
+            </div>
+          </div>
+        )}
         {loading && <div className="message bot"><div className="typing">Typing...</div></div>}
         <div ref={messagesEndRef} />
       </div>
@@ -222,13 +182,13 @@ const Chat = () => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+          onKeyPress={(e) => e.key === 'Enter' && !isProcessing && handleSend()}
           placeholder="Type or speak your message..."
-          disabled={isRecording}
+          disabled={isRecording || isProcessing}
         />
-        <button onClick={() => handleSend()} disabled={loading || isRecording}>Send</button>
+        <button onClick={() => handleSend()} disabled={isProcessing || isRecording}>Send</button>
       </div>
-      <audio ref={audioRef} onEnded={() => { setIsSpeaking(false); setIsPaused(false); setCurrentAudioIndex(null); }} />
+
     </div>
   );
 };

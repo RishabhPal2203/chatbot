@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database.config import engine, Base
-from routes import chat, analytics, voice
+from routes import chat, analytics, voice, streaming
+from streaming_audio import WebSocketStreamer
 import logging
 import os
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,6 +40,32 @@ app.mount("/audio", StaticFiles(directory="audio_responses"), name="audio")
 app.include_router(chat.router)
 app.include_router(analytics.router)
 app.include_router(voice.router)
+app.include_router(streaming.router)
+
+# WebSocket streaming endpoint
+streamer = WebSocketStreamer()
+
+@app.websocket("/ws/chat")
+async def websocket_chat(websocket: WebSocket):
+    await websocket.accept()
+    logger.info("WebSocket client connected")
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            logger.info(f"Received: {message.get('message', message.get('requestAudio'))}")
+            
+            await streamer.handle_streaming_chat(websocket, message)
+            
+    except WebSocketDisconnect:
+        logger.info("WebSocket client disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        try:
+            await websocket.close()
+        except:
+            pass
 
 @app.get("/")
 def root():

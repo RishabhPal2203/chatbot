@@ -11,6 +11,8 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
   const [isRecording, setIsRecording] = useState(false);
   const [titleGenerated, setTitleGenerated] = useState({});
   const [localMessages, setLocalMessages] = useState([]);
+  const [playingMessageIndex, setPlayingMessageIndex] = useState(null);
+  const [isPausedGlobal, setIsPausedGlobal] = useState(false);
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -38,6 +40,12 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
 
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
+
+    // Stop any playing audio when sending new message
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current = null;
+    }
 
     let currentConvId = conversationId;
     
@@ -92,10 +100,6 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
             currentBot.displayText = (currentBot.displayText || '') + chars;
           } else if (streamComplete && charBuffer.length === 0) {
             clearInterval(renderInterval);
-            currentBot.streaming = false;
-            currentBot.displayText = fullResponse;
-            currentBot.text = fullResponse;
-            onUpdateMessages(currentConvId, updatedMessages);
           }
           
           return updatedMessages;
@@ -119,6 +123,19 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
 
       const finishStreaming = () => {
         streamComplete = true;
+        // Schedule state update after render
+        setTimeout(() => {
+          setLocalMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const currentBot = updatedMessages[botMessageIndex];
+            if (currentBot) {
+              currentBot.streaming = false;
+              currentBot.text = fullResponse;
+            }
+            onUpdateMessages(currentConvId, updatedMessages);
+            return updatedMessages;
+          });
+        }, 0);
       };
 
       while (true) {
@@ -267,6 +284,10 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
             message={msg}
             messageIndex={idx}
             activeAudioRef={activeAudioRef}
+            playingMessageIndex={playingMessageIndex}
+            setPlayingMessageIndex={setPlayingMessageIndex}
+            isPausedGlobal={isPausedGlobal}
+            setIsPausedGlobal={setIsPausedGlobal}
           />
         ))}
         

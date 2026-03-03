@@ -1,0 +1,80 @@
+/* Add these styles to your existing Chat.css */
+
+.status-indicators {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.status-badge.speaking {
+  background: #4CAF50;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  animation: pulse 1.5s infinite;
+}
+
+.latency-badge {
+  background: #2196F3;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.message.streaming {
+  opacity: 0.8;
+}
+
+.streaming-indicator {
+  color: #4CAF50;
+  font-size: 12px;
+  margin-left: 8px;
+  animation: blink 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.message-text {
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.audio-play-btn {
+  background: #4CAF50;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.audio-play-btn:hover {
+  background: #45a049;
+  transform: scale(1.1);
+}
+
+.audio-play-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: scale(1);
+}
+
+.message-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

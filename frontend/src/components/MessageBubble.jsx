@@ -3,14 +3,16 @@ import { motion } from 'framer-motion';
 import { Volume2, Pause, Square } from 'lucide-react';
 import { textToSpeech } from '../services/api';
 
-const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+const MessageBubble = ({ message, messageIndex, activeAudioRef, playingMessageIndex, setPlayingMessageIndex, isPausedGlobal, setIsPausedGlobal }) => {
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
   const isUser = message.sender === 'user';
   const isStreaming = message.streaming;
   const displayContent = isStreaming ? message.displayText : message.text;
+  
+  const isPlaying = playingMessageIndex === messageIndex;
+  const isPaused = isPlaying && isPausedGlobal;
+  const isAnyAudioPlaying = playingMessageIndex !== null && playingMessageIndex !== messageIndex && !isPausedGlobal;
 
   const stripMarkdown = (text) => {
     if (!text || typeof text !== 'string') return '';
@@ -54,42 +56,20 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
   const messageText = formatText(displayContent, isStreaming);
 
   useEffect(() => {
-    // Preload TTS audio in background for bot messages (only after streaming complete)
-    if (!isUser && message.text && !isStreaming && !audioRef.current) {
-      const preloadAudio = async () => {
-        try {
-          const cleanText = stripMarkdown(message.text);
-          const audioBlob = await textToSpeech(cleanText);
-          const audioUrl = URL.createObjectURL(audioBlob);
-          audioRef.current = new Audio(audioUrl);
-          audioRef.current.onended = () => {
-            setIsPlaying(false);
-            setIsPaused(false);
-            if (activeAudioRef) activeAudioRef.current = null;
-          };
-        } catch (error) {
-          console.error('TTS preload error:', error);
-        }
-      };
-      preloadAudio();
-    }
-
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
-      if (activeAudioRef?.current === audioRef.current) {
-        activeAudioRef.current = null;
-      }
     };
-  }, [message.text, isStreaming, isUser, activeAudioRef]);
+  }, []);
 
   const handlePlayAudio = async () => {
     try {
       // Stop any currently playing audio
       if (activeAudioRef?.current && activeAudioRef.current !== audioRef.current) {
         activeAudioRef.current.pause();
+        activeAudioRef.current.currentTime = 0;
       }
       
       if (!audioRef.current) {
@@ -99,8 +79,8 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
         const audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current = new Audio(audioUrl);
         audioRef.current.onended = () => {
-          setIsPlaying(false);
-          setIsPaused(false);
+          setPlayingMessageIndex(null);
+          setIsPausedGlobal(false);
           if (activeAudioRef) activeAudioRef.current = null;
         };
         setIsLoading(false);
@@ -108,11 +88,11 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
       
       if (activeAudioRef) activeAudioRef.current = audioRef.current;
       await audioRef.current.play();
-      setIsPlaying(true);
-      setIsPaused(false);
+      setPlayingMessageIndex(messageIndex);
+      setIsPausedGlobal(false);
     } catch (error) {
       console.error('TTS error:', error);
-      setIsPlaying(false);
+      setPlayingMessageIndex(null);
       setIsLoading(false);
     }
   };
@@ -120,14 +100,14 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
   const handlePauseAudio = () => {
     if (audioRef.current) {
       audioRef.current.pause();
-      setIsPaused(true);
+      setIsPausedGlobal(true);
     }
   };
 
   const handleResumeAudio = () => {
     if (audioRef.current) {
       audioRef.current.play();
-      setIsPaused(false);
+      setIsPausedGlobal(false);
     }
   };
 
@@ -135,18 +115,13 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setIsPaused(false);
+      setPlayingMessageIndex(null);
+      setIsPausedGlobal(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
-    >
+    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar */}
       <div className={`
         w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0
@@ -184,8 +159,8 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handlePlayAudio}
-                disabled={isLoading}
-                className="glass hover:glass-strong rounded-full px-4 py-2 flex items-center gap-2 transition-all duration-200 disabled:opacity-50"
+                disabled={isLoading || isAnyAudioPlaying}
+                className="glass hover:glass-strong rounded-full px-4 py-2 flex items-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Volume2 className="w-4 h-4 text-gray-400" />
                 <span className="text-gray-300 text-xs font-medium">{isLoading ? 'Loading...' : 'Play Audio'}</span>
@@ -219,7 +194,7 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef }) => {
           {message.timestamp?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
