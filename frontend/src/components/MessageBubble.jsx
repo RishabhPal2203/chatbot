@@ -12,7 +12,6 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef, playingMessageIn
   
   const isPlaying = playingMessageIndex === messageIndex;
   const isPaused = isPlaying && isPausedGlobal;
-  const isAnyAudioPlaying = playingMessageIndex !== null && playingMessageIndex !== messageIndex && !isPausedGlobal;
 
   const stripMarkdown = (text) => {
     if (!text || typeof text !== 'string') return '';
@@ -159,7 +158,7 @@ const MessageBubble = ({ message, messageIndex, activeAudioRef, playingMessageIn
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handlePlayAudio}
-                disabled={isLoading || isAnyAudioPlaying}
+                disabled={isLoading}
                 className="glass hover:glass-strong rounded-full px-4 py-2 flex items-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Volume2 className="w-4 h-4 text-gray-400" />

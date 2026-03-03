@@ -17,6 +17,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const activeAudioRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,14 +39,16 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
     setTitleGenerated({});
   }, [conversationId]);
 
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
-
-    // Stop any playing audio when sending new message
-    if (activeAudioRef.current) {
-      activeAudioRef.current.pause();
-      activeAudioRef.current = null;
-    }
 
     let currentConvId = conversationId;
     
@@ -71,10 +74,12 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
     let renderInterval = null;
 
     try {
+      abortControllerRef.current = new AbortController();
       const response = await fetch('http://localhost:8000/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, session_id: sessionId })
+        body: JSON.stringify({ message: text, session_id: sessionId }),
+        signal: abortControllerRef.current.signal
       });
 
       const reader = response.body.getReader();
@@ -173,12 +178,18 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
       }
     } catch (error) {
       if (renderInterval) clearInterval(renderInterval);
+      if (error.name === 'AbortError') {
+        console.log('Request aborted');
+        return;
+      }
       const errorMessage = { 
         text: 'Error: Could not connect to server', 
         sender: 'bot',
         timestamp: new Date()
       };
       onUpdateMessages(currentConvId, [...newMessages, errorMessage]);
+    } finally {
+      abortControllerRef.current = null;
     }
   };
 
