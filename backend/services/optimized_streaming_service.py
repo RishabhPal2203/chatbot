@@ -6,9 +6,20 @@ import os
 
 class OptimizedStreamingService:
     def __init__(self):
-        self.groq_client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        self._groq_client = None
         self.min_chunk = 50  # Balanced: not too small, not too large
         self.max_chunk = 100  # Balanced
+    
+    @property
+    def groq_client(self):
+        """Get Groq client with current API key"""
+        from routes.settings import get_groq_api_key
+        api_key = get_groq_api_key()
+        if not api_key:
+            raise ValueError("Please configure your Groq API key in Settings")
+        if self._groq_client is None or self._groq_client.api_key != api_key:
+            self._groq_client = AsyncGroq(api_key=api_key)
+        return self._groq_client
         
     async def stream_llm_response(self, message: str) -> AsyncGenerator[str, None]:
         """Stream tokens from Groq with minimal latency"""

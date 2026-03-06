@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Menu } from 'lucide-react';
+import { Menu, Settings } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import InputBar from './InputBar';
+import SettingsModal from './SettingsModal';
 import { transcribeAudio, generateConversationTitle } from '../services/api';
+import { setGroqApiKey } from '../services/settingsApi';
 
 const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConversation, onUpdateConversationTitle, onToggleSidebar, isSidebarOpen }) => {
   const [sessionId, setSessionId] = useState(null);
@@ -13,6 +15,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
   const [localMessages, setLocalMessages] = useState([]);
   const [playingMessageIndex, setPlayingMessageIndex] = useState(null);
   const [isPausedGlobal, setIsPausedGlobal] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -236,6 +239,11 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
     }
   };
 
+  const handleSaveApiKey = async (apiKey) => {
+    await setGroqApiKey(apiKey);
+    sessionStorage.setItem('groq_api_key_set', 'true');
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full relative">
       {/* Header */}
@@ -252,6 +260,13 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
           <h1 className="text-white text-lg font-semibold">Cloud Contact Center Assistant</h1>
           <p className="text-gray-400 text-sm">AI-powered support chatbot</p>
         </div>
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="glass hover:glass-strong rounded-xl p-2 transition-all duration-200 hover:scale-105 active:scale-95"
+          title="Settings"
+        >
+          <Settings className="w-5 h-5 text-white" />
+        </button>
         {isRecording && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -343,6 +358,13 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
         onStopRecording={stopRecording}
         isRecording={isRecording}
         disabled={loading}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSaveKey={handleSaveApiKey}
       />
     </div>
   );

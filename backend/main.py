@@ -2,7 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database.config import engine, Base
-from routes import chat, analytics, voice, streaming
+from routes import chat, analytics, voice, streaming, settings
 from streaming_audio import WebSocketStreamer
 import logging
 import os
@@ -41,6 +41,7 @@ app.include_router(chat.router)
 app.include_router(analytics.router)
 app.include_router(voice.router)
 app.include_router(streaming.router)
+app.include_router(settings.router)
 
 # WebSocket streaming endpoint
 streamer = WebSocketStreamer()

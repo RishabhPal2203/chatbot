@@ -7,7 +7,7 @@ import re
 
 class ChatService:
     def __init__(self):
-        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        self._client = None
         self.system_prompt = """You are a Cloud Contact Center Assistant. You help with IVR systems, omnichannel support, cloud telephony, CRM integrations, contact center analytics, and platforms like Amazon Connect, Twilio, Genesys.
 
 FORMATTING RULES (MANDATORY):
@@ -30,6 +30,17 @@ Brief intro text.
 2. **Second step**: Details
 
 Be concise, professional, and always use proper formatting."""
+    
+    @property
+    def client(self):
+        """Get Groq client with current API key"""
+        from routes.settings import get_groq_api_key
+        api_key = get_groq_api_key()
+        if not api_key:
+            raise ValueError("Please configure your Groq API key in Settings")
+        if self._client is None or self._client.api_key != api_key:
+            self._client = Groq(api_key=api_key)
+        return self._client
     
     async def stream_message(self, user_input: str, session_id: str):
         """Stream tokens from Groq"""

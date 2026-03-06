@@ -6,10 +6,18 @@ load_dotenv()
 
 class TitleGenerationService:
     def __init__(self):
-        api_key = os.getenv("GROQ_API_KEY")
+        self._client = None
+    
+    @property
+    def client(self):
+        """Get Groq client with current API key"""
+        from routes.settings import get_groq_api_key
+        api_key = get_groq_api_key()
         if not api_key:
-            raise ValueError("GROQ_API_KEY not found in environment variables")
-        self.client = Groq(api_key=api_key)
+            raise ValueError("Please configure your Groq API key in Settings")
+        if self._client is None or self._client.api_key != api_key:
+            self._client = Groq(api_key=api_key)
+        return self._client
     
     def generate_title(self, first_message: str) -> str:
         """Generate a short conversation title from the first user message using minimal tokens"""
