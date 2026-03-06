@@ -15,9 +15,6 @@
       "dest": "api/index.py"
     }
   ],
-  "install": {
-    "requirements": "backend/requirements.txt"
-  },
   "env": {
     "GROQ_API_KEY": "@groq_api_key"
   }
