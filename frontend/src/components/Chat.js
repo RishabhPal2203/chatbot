@@ -116,11 +116,35 @@ const Chat = () => {
   };
 
   const handleVoiceInput = async (audioBlob) => {
-    // Placeholder for voice transcription
-    // Replace with actual transcription service
-    const mockTranscription = "Hello, I need help with my order";
-    setInput(mockTranscription);
-    await handleSend(mockTranscription);
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.webm');
+      
+      const response = await fetch('http://localhost:8000/api/transcribe', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Transcription failed');
+      }
+      
+      const data = await response.json();
+      const transcription = data.text;
+      
+      if (transcription && transcription.trim()) {
+        await handleSend(transcription);
+      } else {
+        alert('No speech detected. Please try again.');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+      alert(`Transcription failed: ${error.message}\n\nPlease configure your Groq API key in Settings (⚙️ icon).`);
+      setLoading(false);
+    }
   };
 
   const toggleRecording = () => {

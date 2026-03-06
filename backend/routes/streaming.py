@@ -2,7 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
 import json
 from services.optimized_streaming_service import optimized_streaming_service
-from services.streaming_tts_service import streaming_tts_service
+from services.openai_tts_service import openai_tts_service
 
 router = APIRouter(prefix="/ws", tags=["websocket"])
 
@@ -40,7 +40,7 @@ async def websocket_stream(websocket: WebSocket):
                 print(f"🔊 TTS Call #{tts_count}: '{text_chunk[:50]}...'")
                 
                 try:
-                    async for audio_chunk in streaming_tts_service.text_to_speech_stream(text_chunk):
+                    async for audio_chunk in openai_tts_service.text_to_speech_stream(text_chunk):
                         if audio_chunk:
                             await websocket.send_bytes(audio_chunk)
                 except asyncio.CancelledError:

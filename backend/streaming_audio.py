@@ -31,6 +31,8 @@ class WebSocketStreamer:
     
     async def handle_streaming_chat(self, websocket: WebSocket, message: dict):
         """Handle streaming text + audio response"""
+        from routes.settings import get_groq_api_key
+        from groq import AsyncGroq
         
         # Check if this is an audio request
         if message.get('requestAudio'):
@@ -41,23 +43,33 @@ class WebSocketStreamer:
             await websocket.send_text(json.dumps({'type': 'audio_complete'}))
             return
         
-        # Regular text message - skip audio if requested
-        text_response = message.get('message', '')
-        skip_audio = message.get('skipAudio', False)
+        # Regular text message
+        text_message = message.get('message', '')
         
-        # Stream text tokens first
-        async for token in self._stream_text_response(text_response):
+        # Get API key
+        api_key = get_groq_api_key()
+        if not api_key:
             await websocket.send_text(json.dumps({
-                'type': 'text_token',
-                'token': token
+                'type': 'error',
+                'message': 'Please configure your Groq API key in Settings'
             }))
+            return
+        
+        # Stream text tokens from Groq
+        client = AsyncGroq(api_key=api_key)
+        stream = await client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": text_message}],
+            stream=True
+        )
+        
+        async for chunk in stream:
+            if chunk.choices[0].delta.content:
+                token = chunk.choices[0].delta.content
+                await websocket.send_text(json.dumps({
+                    'type': 'text_token',
+                    'token': token
+                }))
         
         # Signal text completion
         await websocket.send_text(json.dumps({'type': 'text_complete'}))
-    
-    async def _stream_text_response(self, text: str) -> AsyncGenerator[str, None]:
-        """Simulate Groq streaming API response"""
-        words = text.split()
-        for word in words:
-            yield word + ' '
-            await asyncio.sleep(0.05)

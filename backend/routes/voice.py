@@ -6,10 +6,9 @@ import os
 import re
 from io import BytesIO
 from gtts import gTTS
+from routes.settings import get_groq_api_key
 
 router = APIRouter(prefix="/api", tags=["voice"])
-
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 from typing import Optional
 
@@ -113,7 +112,16 @@ def is_domain_related(text: str) -> bool:
 
 @router.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)):
+    # Get API key from user settings
+    groq_key = get_groq_api_key()
+    if not groq_key:
+        raise HTTPException(
+            status_code=500, 
+            detail="GROQ_API_KEY not configured. Please add your Groq API key in the Settings."
+        )
+    
     try:
+        client = Groq(api_key=groq_key)
         audio_data = await file.read()
         print(f"Received audio file: {file.filename}, size: {len(audio_data)} bytes")
         
@@ -127,11 +135,20 @@ async def transcribe_audio(file: UploadFile = File(...)):
         return {"text": transcript.text}
     except Exception as e:
         print(f"Transcription error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
     try:
+        # Get API key from user settings
+        groq_key = get_groq_api_key()
+        if not groq_key:
+            raise HTTPException(
+                status_code=500,
+                detail="GROQ_API_KEY not configured. Please add your Groq API key in the Settings."
+            )
+        
+        client = Groq(api_key=groq_key)
         user_message = request.message.strip()
         
         # Check if greeting
