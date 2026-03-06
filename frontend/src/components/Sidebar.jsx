@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, User, ChevronLeft } from 'lucide-react';
+import { Plus, ChevronLeft } from 'lucide-react';
 import ConversationItem from './ConversationItem';
 
 const Sidebar = ({ 
@@ -44,19 +44,6 @@ const Sidebar = ({
                 onDelete={() => onDeleteConversation(conv.id)}
               />
             ))}
-          </div>
-
-          {/* User Profile */}
-          <div className="p-4 border-t border-white/10">
-            <div className="glass rounded-xl px-4 py-3 flex items-center gap-3 hover:glass-strong transition-all duration-200 cursor-pointer">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium truncate">User</p>
-                <p className="text-gray-400 text-xs truncate">user@example.com</p>
-              </div>
-            </div>
           </div>
 
           {/* Close Button (Mobile) */}

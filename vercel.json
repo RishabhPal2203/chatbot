@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb"
+      }
     }
   ],
   "routes": [
@@ -11,5 +14,11 @@
       "src": "/(.*)",
       "dest": "api/index.py"
     }
-  ]
+  ],
+  "install": {
+    "requirements": "backend/requirements.txt"
+  },
+  "env": {
+    "GROQ_API_KEY": "@groq_api_key"
+  }
 }

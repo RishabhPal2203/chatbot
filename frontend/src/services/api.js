@@ -2,6 +2,9 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+// Configure axios to include credentials (cookies) with all requests
+axios.defaults.withCredentials = true;
+
 export const sendTextMessage = async (message, sessionId) => {
   const response = await axios.post(`${API_BASE_URL}/chat/text`, {
     message,

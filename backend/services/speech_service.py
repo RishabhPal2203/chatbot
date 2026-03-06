@@ -6,8 +6,13 @@ import uuid
 class SpeechService:
     def __init__(self):
         self.recognizer = sr.Recognizer()
-        self.audio_dir = "audio_responses"
-        os.makedirs(self.audio_dir, exist_ok=True)
+        # Use /tmp for serverless environments (Vercel, AWS Lambda)
+        self.audio_dir = "/tmp/audio_responses" if os.getenv("VERCEL") else "audio_responses"
+        try:
+            os.makedirs(self.audio_dir, exist_ok=True)
+        except OSError:
+            # Fallback if directory creation fails
+            self.audio_dir = "/tmp"
     
     def speech_to_text(self, audio_file) -> str:
         with sr.AudioFile(audio_file) as source:

@@ -104,7 +104,7 @@ const SettingsModal = ({ isOpen, onClose, onSaveKey, isRequired = false }) => {
                   required
                 />
                 <p className="mt-2 text-xs text-gray-400">
-                  Your API key starts with "gsk_" and is stored only during this session
+                  Your API key is stored only during this session
                 </p>
               </div>
 

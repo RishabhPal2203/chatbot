@@ -1,0 +1,11 @@
+backend/audio_responses/
+backend/chatbot.db
+backend/__pycache__/
+**/__pycache__/
+**/*.pyc
+.env
+.env.local
+node_modules/
+frontend/
+*.mp3
+*.wav

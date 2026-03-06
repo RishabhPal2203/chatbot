@@ -15,18 +15,11 @@ function App() {
   useEffect(() => {
     const checkApiKey = async () => {
       try {
-        const hasKeyInSession = sessionStorage.getItem('groq_api_key_set') === 'true';
-        
-        if (!hasKeyInSession) {
-          const status = await checkApiKeyStatus();
-          if (!status.has_api_key) {
-            setShowInitialSettings(true);
-          } else {
-            sessionStorage.setItem('groq_api_key_set', 'true');
-          }
+        const status = await checkApiKeyStatus();
+        if (!status.has_api_key) {
+          setShowInitialSettings(true);
         }
       } catch (error) {
-        console.error('Failed to check API key status:', error);
         setShowInitialSettings(true);
       } finally {
         setIsCheckingApiKey(false);
@@ -76,7 +69,6 @@ function App() {
 
   const handleInitialApiKeySave = async (apiKey) => {
     await setGroqApiKey(apiKey);
-    sessionStorage.setItem('groq_api_key_set', 'true');
     setShowInitialSettings(false);
   };
 

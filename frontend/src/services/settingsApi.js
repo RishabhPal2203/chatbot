@@ -4,6 +4,7 @@ export const setGroqApiKey = async (apiKey) => {
   const response = await fetch(`${API_BASE_URL}/settings/api-key`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ api_key: apiKey })
   });
 
@@ -16,7 +17,9 @@ export const setGroqApiKey = async (apiKey) => {
 };
 
 export const checkApiKeyStatus = async () => {
-  const response = await fetch(`${API_BASE_URL}/settings/api-key/status`);
+  const response = await fetch(`${API_BASE_URL}/settings/api-key/status`, {
+    credentials: 'include'  // Include cookies
+  });
   if (!response.ok) throw new Error('Failed to check API key status');
   return response.json();
 };

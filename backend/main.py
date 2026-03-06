@@ -17,7 +17,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-Base.metadata.create_all(bind=engine)
+# Skip database creation in serverless
+if not os.getenv("VERCEL"):
+    Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Cloud Contact Center AI Assistant",
@@ -28,14 +30,16 @@ app = FastAPI(
 origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,  # Use specific origins, not "*" when using credentials
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-os.makedirs("audio_responses", exist_ok=True)
-app.mount("/audio", StaticFiles(directory="audio_responses"), name="audio")
+# Skip file operations in serverless
+if not os.getenv("VERCEL"):
+    os.makedirs("audio_responses", exist_ok=True)
+    app.mount("/audio", StaticFiles(directory="audio_responses"), name="audio")
 
 app.include_router(chat.router)
 app.include_router(analytics.router)

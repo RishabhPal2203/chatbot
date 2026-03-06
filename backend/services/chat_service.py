@@ -1,6 +1,7 @@
 from groq import Groq
 from models.conversation import Conversation
 from sqlalchemy.orm import Session
+from fastapi import Request
 import os
 from datetime import datetime
 import re
@@ -31,20 +32,18 @@ Brief intro text.
 
 Be concise, professional, and always use proper formatting."""
     
-    @property
-    def client(self):
-        """Get Groq client with current API key"""
+    def get_client(self, request: Request):
+        """Get Groq client with current session's API key"""
         from routes.settings import get_groq_api_key
-        api_key = get_groq_api_key()
+        api_key = get_groq_api_key(request)
         if not api_key:
             raise ValueError("Please configure your Groq API key in Settings")
-        if self._client is None or self._client.api_key != api_key:
-            self._client = Groq(api_key=api_key)
-        return self._client
+        return Groq(api_key=api_key)
     
-    async def stream_message(self, user_input: str, session_id: str):
+    async def stream_message(self, user_input: str, session_id: str, request: Request):
         """Stream tokens from Groq"""
-        stream = self.client.chat.completions.create(
+        client = self.get_client(request)
+        stream = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": self.system_prompt},
@@ -110,12 +109,13 @@ Be concise, professional, and always use proper formatting."""
         
         return formatted.strip()
     
-    def process_message(self, user_input: str, session_id: str, db: Session) -> dict:
+    def process_message(self, user_input: str, session_id: str, db: Session, request: Request) -> dict:
         intent = self.detect_intent(user_input)
         
         # Use Groq for response generation
         try:
-            response_obj = self.client.chat.completions.create(
+            client = self.get_client(request)
+            response_obj = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[
                     {"role": "system", "content": self.system_prompt},

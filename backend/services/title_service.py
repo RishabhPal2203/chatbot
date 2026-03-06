@@ -1,29 +1,28 @@
 import os
 from groq import Groq
+from fastapi import Request
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class TitleGenerationService:
     def __init__(self):
-        self._client = None
+        pass
     
-    @property
-    def client(self):
-        """Get Groq client with current API key"""
+    def get_client(self, request: Request):
+        """Get Groq client with current session's API key"""
         from routes.settings import get_groq_api_key
-        api_key = get_groq_api_key()
+        api_key = get_groq_api_key(request)
         if not api_key:
             raise ValueError("Please configure your Groq API key in Settings")
-        if self._client is None or self._client.api_key != api_key:
-            self._client = Groq(api_key=api_key)
-        return self._client
+        return Groq(api_key=api_key)
     
-    def generate_title(self, first_message: str) -> str:
+    def generate_title(self, first_message: str, request: Request) -> str:
         """Generate a short conversation title from the first user message using minimal tokens"""
         try:
-            response = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+            client = self.get_client(request)
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",  # Faster model
                 messages=[
                     {
                         "role": "system",

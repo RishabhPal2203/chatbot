@@ -4,6 +4,7 @@ import { Menu, Settings } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import InputBar from './InputBar';
 import SettingsModal from './SettingsModal';
+import { ToastContainer } from './Toast';
 import { transcribeAudio, generateConversationTitle } from '../services/api';
 import { setGroqApiKey } from '../services/settingsApi';
 
@@ -16,6 +17,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
   const [playingMessageIndex, setPlayingMessageIndex] = useState(null);
   const [isPausedGlobal, setIsPausedGlobal] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [toasts, setToasts] = useState([]);
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -24,6 +26,15 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const showToast = (message, type = 'error', duration = 5000) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type, duration }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
   };
 
   useEffect(() => {
@@ -55,12 +66,13 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
 
     let currentConvId = conversationId;
     
+    // Create conversation before updating state
     if (!currentConvId) {
       currentConvId = onCreateConversation('New Conversation');
     }
 
     const userMessage = { text, sender: 'user', timestamp: new Date() };
-    const newMessages = [...messages, userMessage];
+    const newMessages = [...(messages || []), userMessage];
     onUpdateMessages(currentConvId, newMessages);
 
     const botMessage = {
@@ -81,6 +93,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
       const response = await fetch('http://localhost:8000/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',  // Send cookies!
         body: JSON.stringify({ message: text, session_id: sessionId }),
         signal: abortControllerRef.current.signal
       });
@@ -164,7 +177,6 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
               if (!sessionId) setSessionId(data.session_id);
             } else if (data.error) {
               if (renderInterval) clearInterval(renderInterval);
-              console.error('Stream error:', data.error);
             }
           }
         }
@@ -172,17 +184,19 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
       
       if (messages.length === 0 && !titleGenerated[currentConvId]) {
         setTitleGenerated(prev => ({ ...prev, [currentConvId]: true }));
-        try {
-          const titleResponse = await generateConversationTitle(text);
-          onUpdateConversationTitle(currentConvId, titleResponse.title);
-        } catch (error) {
-          console.error('Title generation failed:', error);
-        }
+        // Use setTimeout to avoid state update during render
+        setTimeout(async () => {
+          try {
+            const titleResponse = await generateConversationTitle(text);
+            onUpdateConversationTitle(currentConvId, titleResponse.title);
+          } catch (error) {
+            // Silent fail
+          }
+        }, 0);
       }
     } catch (error) {
       if (renderInterval) clearInterval(renderInterval);
       if (error.name === 'AbortError') {
-        console.log('Request aborted');
         return;
       }
       const errorMessage = { 
@@ -215,7 +229,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
       mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (error) {
-      alert('Microphone permission denied');
+      showToast('Microphone permission denied. Please allow microphone access.', 'error');
     }
   };
 
@@ -232,8 +246,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
       const transcription = await transcribeAudio(audioBlob);
       await handleSendMessage(transcription.text);
     } catch (error) {
-      console.error('Transcription error:', error);
-      alert(`Transcription failed: ${error.message}`);
+      showToast(`Transcription failed: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -241,7 +254,6 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
 
   const handleSaveApiKey = async (apiKey) => {
     await setGroqApiKey(apiKey);
-    sessionStorage.setItem('groq_api_key_set', 'true');
   };
 
   return (
@@ -366,6 +378,9 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
         onClose={() => setIsSettingsOpen(false)}
         onSaveKey={handleSaveApiKey}
       />
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };
