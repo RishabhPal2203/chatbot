@@ -10,10 +10,8 @@ backend_path = Path(__file__).parent.parent / "backend"
 sys.path.insert(0, str(backend_path))
 
 try:
-    # Import the main app
     from main import app
 except Exception as e:
-    # Fallback minimal app if imports fail
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     
@@ -38,4 +36,7 @@ except Exception as e:
     @app.get("/health")
     def health():
         return {"status": "healthy", "error": str(e)}
+
+# Expose app at module level for Vercel
+handler = app
 
