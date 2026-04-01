@@ -1,12 +1,23 @@
-import spacy
+import os
+import uuid
+
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
+
 from typing import Tuple
 import re
 
 class IntentDetector:
     def __init__(self):
-        try:
-            self.nlp = spacy.load("en_core_web_sm")
-        except:
+        if SPACY_AVAILABLE:
+            try:
+                self.nlp = spacy.load("en_core_web_sm")
+            except:
+                self.nlp = None
+        else:
             self.nlp = None
         
         self.intent_patterns = {

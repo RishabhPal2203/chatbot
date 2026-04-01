@@ -1,11 +1,19 @@
-import speech_recognition as sr
-from gtts import gTTS
 import os
 import uuid
 
+try:
+    import speech_recognition as sr
+    from gtts import gTTS
+    SPEECH_AVAILABLE = True
+except ImportError:
+    SPEECH_AVAILABLE = False
+
 class SpeechService:
     def __init__(self):
-        self.recognizer = sr.Recognizer()
+        if SPEECH_AVAILABLE:
+            self.recognizer = sr.Recognizer()
+        else:
+            self.recognizer = None
         # Use /tmp for serverless environments (Vercel, AWS Lambda)
         self.audio_dir = "/tmp/audio_responses" if os.getenv("VERCEL") else "audio_responses"
         try:
@@ -15,12 +23,16 @@ class SpeechService:
             self.audio_dir = "/tmp"
     
     def speech_to_text(self, audio_file) -> str:
+        if not SPEECH_AVAILABLE:
+            raise NotImplementedError("Speech recognition not available in serverless environment")
         with sr.AudioFile(audio_file) as source:
             audio = self.recognizer.record(source)
             text = self.recognizer.recognize_google(audio)
             return text
     
     def text_to_speech(self, text: str) -> str:
+        if not SPEECH_AVAILABLE:
+            raise NotImplementedError("Text-to-speech not available in serverless environment")
         filename = f"{uuid.uuid4()}.mp3"
         filepath = os.path.join(self.audio_dir, filename)
         tts = gTTS(text=text, lang='en', slow=False, lang_check=False)
