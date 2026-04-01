@@ -1,4 +1,9 @@
 {
+  "build": {
+    "env": {
+      "PYTHON_VERSION": "3.11"
+    }
+  },
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/build",
   "devCommand": "cd frontend && npm start",
