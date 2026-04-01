@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Set Vercel environment flag BEFORE any imports
 os.environ["VERCEL"] = "1"
@@ -12,9 +14,6 @@ sys.path.insert(0, str(backend_path))
 try:
     from main import app
 except Exception as e:
-    from fastapi import FastAPI
-    from fastapi.middleware.cors import CORSMiddleware
-    
     app = FastAPI(title="Cloud Contact Center AI Assistant")
     
     app.add_middleware(
@@ -37,6 +36,6 @@ except Exception as e:
     def health():
         return {"status": "healthy", "error": str(e)}
 
-# Expose app at module level for Vercel
+app = app
 handler = app
 
