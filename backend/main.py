@@ -1,9 +1,9 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from database.config import engine, Base
-from routes import chat, analytics, voice, streaming, settings
-from streaming_audio import WebSocketStreamer
+from .database.config import engine, Base
+from .routes import chat, analytics, voice, streaming, settings
+from .streaming_audio import WebSocketStreamer
 import logging
 import os
 import json
