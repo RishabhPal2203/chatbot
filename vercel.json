@@ -1,13 +1,11 @@
 {
-  "build": {
-    "env": {
-      "PYTHON_VERSION": "3.12"
-    }
-  },
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/build",
   "devCommand": "cd frontend && npm start",
   "framework": "create-react-app",
+  "env": {
+    "PYTHON_VERSION": "3.12"
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
