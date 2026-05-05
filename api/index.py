@@ -8,13 +8,17 @@ import traceback
 # Set Vercel environment flag BEFORE any imports
 os.environ["VERCEL"] = "1"
 
-# Add backend to path
-backend_path = Path(__file__).parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+# Change working directory to backend for relative imports to work
+os.chdir(Path(__file__).parent.parent / "backend")
+
+# Add the project root to path so 'backend' is importable as a package
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 error_details = None
 try:
-    from main import app
+    from backend.main import app as backend_app
+    app = backend_app
 except Exception as e:
     error_details = f"{str(e)}\n{traceback.format_exc()}"
     app = FastAPI(title="Cloud Contact Center AI Assistant")
@@ -32,7 +36,7 @@ except Exception as e:
         return {
             "message": "Cloud Contact Center AI Assistant API",
             "status": "running",
-            "note": "Serverless deployment - limited features",
+            "note": "Serverless deployment - import error occurred",
             "error": error_details
         }
     
@@ -40,6 +44,5 @@ except Exception as e:
     def health():
         return {"status": "healthy", "error": error_details}
 
-app = app
 handler = app
 

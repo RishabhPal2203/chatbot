@@ -55,6 +55,11 @@ class StreamingChatClient {
         this.onAudioComplete();
         this.isStreamingAudio = false;
         break;
+      case 'error':
+        console.error('[WS] Error:', message.message);
+        alert(message.message || 'An error occurred');
+        this.onTextComplete();
+        break;
     }
   }
 

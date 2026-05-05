@@ -1,14 +1,24 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from .database.config import engine, Base
-from .routes import chat, analytics, voice, streaming, settings
-from .streaming_audio import WebSocketStreamer
 import logging
 import os
+import sys
 import json
 from dotenv import load_dotenv
+
+# Handle both relative and absolute imports
+try:
+    from .database.config import engine, Base
+    from .routes import chat, analytics, voice, streaming, settings
+    from .streaming_audio import WebSocketStreamer
+except ImportError:
+    # When running directly from backend directory
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from backend.database.config import engine, Base
+    from backend.routes import chat, analytics, voice, streaming, settings
+    from backend.streaming_audio import WebSocketStreamer
 
 load_dotenv()
 
@@ -28,7 +38,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001")
+if origins == "*":
+    origins = ["*"]
+else:
+    origins = origins.split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -61,6 +75,9 @@ async def websocket_chat(websocket: WebSocket):
             data = await websocket.receive_text()
             message = json.loads(data)
             logger.info(f"Received: {message.get('message', message.get('requestAudio'))}")
+            
+            # Pass cookies from WebSocket for session lookup
+            message['_cookies'] = dict(websocket.cookies) if hasattr(websocket, 'cookies') else {}
             
             await streamer.handle_streaming_chat(websocket, message)
             
