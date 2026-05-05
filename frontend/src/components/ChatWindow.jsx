@@ -6,7 +6,7 @@ import InputBar from './InputBar';
 import SettingsModal from './SettingsModal';
 import { ToastContainer } from './Toast';
 import { transcribeAudio, generateConversationTitle } from '../services/api';
-import { setGroqApiKey } from '../services/settingsApi';
+import { setGroqApiKey, getStoredApiKey } from '../services/settingsApi';
 import { API_URL } from '../config';
 
 const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConversation, onUpdateConversationTitle, onToggleSidebar, isSidebarOpen }) => {
@@ -62,9 +62,12 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
     };
   }, []);
 
-  const handleSendMessage = async (text) => {
+const handleSendMessage = async (text) => {
     if (!text.trim()) return;
-
+    
+    // Get stored API key from localStorage
+    const apiKey = getStoredApiKey();
+    
     let currentConvId = conversationId;
     
     // Create conversation before updating state
@@ -95,7 +98,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',  // Send cookies!
-        body: JSON.stringify({ message: text, session_id: sessionId }),
+        body: JSON.stringify({ message: text, session_id: sessionId, api_key: apiKey }),
         signal: abortControllerRef.current.signal
       });
 

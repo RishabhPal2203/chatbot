@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
 import SettingsModal from './components/SettingsModal';
-import { checkApiKeyStatus, setGroqApiKey } from './services/settingsApi';
+import { checkApiKeyStatus, setGroqApiKey, getStoredApiKey } from './services/settingsApi';
 
 function App() {
   const [conversations, setConversations] = useState([]);
@@ -11,9 +11,16 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showInitialSettings, setShowInitialSettings] = useState(false);
   const [isCheckingApiKey, setIsCheckingApiKey] = useState(true);
-
+  
   useEffect(() => {
     const checkApiKey = async () => {
+      // First check localStorage (for cross-domain compatibility)
+      const localKey = getStoredApiKey();
+      if (localKey) {
+        setIsCheckingApiKey(false);
+        return;
+      }
+      
       try {
         const status = await checkApiKeyStatus();
         if (!status.has_api_key) {
