@@ -7,6 +7,7 @@ import SettingsModal from './SettingsModal';
 import { ToastContainer } from './Toast';
 import { transcribeAudio, generateConversationTitle } from '../services/api';
 import { setGroqApiKey } from '../services/settingsApi';
+import { API_URL } from '../config';
 
 const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConversation, onUpdateConversationTitle, onToggleSidebar, isSidebarOpen }) => {
   const [sessionId, setSessionId] = useState(null);
@@ -90,7 +91,7 @@ const ChatWindow = ({ conversationId, messages, onUpdateMessages, onCreateConver
 
     try {
       abortControllerRef.current = new AbortController();
-      const response = await fetch('http://localhost:8000/chat/stream', {
+      const response = await fetch(`${API_URL}/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',  // Send cookies!

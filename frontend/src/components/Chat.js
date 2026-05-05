@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import StreamingChatClient from '../services/StreamingChatClient';
+import { API_URL } from '../config';
 import './Chat.css';
 
 const Chat = () => {
@@ -115,16 +116,16 @@ const Chat = () => {
     }
   };
 
-  const handleVoiceInput = async (audioBlob) => {
-    try {
-      setLoading(true);
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'audio.webm');
-      
-      const response = await fetch('http://localhost:8000/api/transcribe', {
-        method: 'POST',
-        body: formData
-      });
+   const handleVoiceInput = async (audioBlob) => {
+     try {
+       setLoading(true);
+       const formData = new FormData();
+       formData.append('file', audioBlob, 'audio.webm');
+       
+       const response = await fetch(`${API_URL}/api/transcribe`, {
+         method: 'POST',
+         body: formData
+       });
       
       if (!response.ok) {
         const error = await response.json();

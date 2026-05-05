@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000';
+import { API_URL } from '../config';
+
+const API_BASE_URL = API_URL;
 
 export const setGroqApiKey = async (apiKey) => {
   const response = await fetch(`${API_BASE_URL}/settings/api-key`, {

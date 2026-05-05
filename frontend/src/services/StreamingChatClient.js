@@ -1,4 +1,5 @@
 import StreamingAudioPlayer from './StreamingAudioPlayer';
+import { WS_URL } from '../config';
 
 class StreamingChatClient {
   constructor(onTextToken, onTextComplete, onAudioComplete) {
@@ -12,7 +13,7 @@ class StreamingChatClient {
   }
 
   connect() {
-    const wsUrl = `ws://localhost:8000/ws/chat`;
+    const wsUrl = `${WS_URL}/ws/chat`;
     this.ws = new WebSocket(wsUrl);
     this.ws.binaryType = 'arraybuffer';
 

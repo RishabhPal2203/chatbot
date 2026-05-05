@@ -1,0 +1,32 @@
+# Render Deployment Configuration
+# This file defines two separate services for Render
+
+services:
+  # Backend API Service (Python/FastAPI)
+  - type: web
+    name: chatbot-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && python main.py
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./chatbot.db
+      - key: CORS_ORIGINS
+        value: https://chatbot-frontend.onrender.com
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PORT
+        value: 8000
+    healthCheckPath: /health
+
+  # Frontend Static Site (React)
+  - type: static
+    name: chatbot-frontend
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://chatbot-backend.onrender.com
+    headers:
+      - key: Cache-Control
+        value: public, max-age=0, must-revalidate

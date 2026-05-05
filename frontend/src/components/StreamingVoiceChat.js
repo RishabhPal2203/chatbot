@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AudioStreamPlayer } from '../utils/audioPlayer';
+import { WS_URL } from '../config';
 
 export default function StreamingVoiceChat() {
   const [messages, setMessages] = useState([]);
@@ -24,7 +25,7 @@ export default function StreamingVoiceChat() {
   }, []);
 
   const connectWebSocket = () => {
-    const ws = new WebSocket('ws://localhost:8000/ws/stream');
+    const ws = new WebSocket(`${WS_URL}/ws/stream`);
     
     ws.onopen = () => {
       console.log('WebSocket connected');

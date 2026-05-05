@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AudioStreamPlayer } from '../utils/audioPlayerOptimized';
+import { WS_URL } from '../config';
 
 export default function VoiceChatOptimized() {
   const [messages, setMessages] = useState([]);
@@ -28,7 +29,7 @@ export default function VoiceChatOptimized() {
   const connectWebSocket = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
     
-    const ws = new WebSocket('ws://localhost:8000/ws/stream');
+    const ws = new WebSocket(`${WS_URL}/ws/stream`);
     
     ws.onopen = () => {
       console.log('✅ WebSocket connected');

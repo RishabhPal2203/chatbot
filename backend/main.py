@@ -1,6 +1,7 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from .database.config import engine, Base
 from .routes import chat, analytics, voice, streaming, settings
 from .streaming_audio import WebSocketStreamer
@@ -30,7 +31,7 @@ app = FastAPI(
 origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Use specific origins, not "*" when using credentials
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,6 +89,27 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+# SPA fallback - serve frontend files or index.html
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # Let API routes handle themselves (this should never be reached for API routes)
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    frontend_build_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "build")
+    
+    # Check for static asset files in build directory
+    potential_file = os.path.join(frontend_build_path, full_path)
+    if os.path.isfile(potential_file):
+        return FileResponse(potential_file)
+    
+    # Fallback to SPA index.html
+    index_path = os.path.join(frontend_build_path, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"message": "Frontend not built. Run: cd frontend && npm run build"}
 
 if __name__ == "__main__":
     import uvicorn
