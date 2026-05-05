@@ -11,7 +11,7 @@ fi
 # Start backend
 echo "Starting backend server..."
 cd "$(dirname "$0")"
-python3 backend/main.py &
+python3 run_local.py &
 BACKEND_PID=$!
 
 # Wait for backend to start

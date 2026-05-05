@@ -6,7 +6,7 @@ import os
 import re
 from io import BytesIO
 from gtts import gTTS
-from routes.settings import get_groq_api_key
+from .settings import get_groq_api_key
 
 router = APIRouter(prefix="/api", tags=["voice"])
 

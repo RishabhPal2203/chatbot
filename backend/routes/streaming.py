@@ -1,8 +1,8 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
 import json
-from services.optimized_streaming_service import optimized_streaming_service
-from services.openai_tts_service import openai_tts_service
+from ..services.optimized_streaming_service import optimized_streaming_service
+from ..services.openai_tts_service import openai_tts_service
 
 router = APIRouter(prefix="/ws", tags=["websocket"])
 

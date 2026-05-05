@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from database.config import get_db
-from analytics.analytics_service import AnalyticsService
+from ..database.config import get_db
+from ..analytics.analytics_service import AnalyticsService
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 

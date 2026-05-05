@@ -31,7 +31,7 @@ class WebSocketStreamer:
     
     async def handle_streaming_chat(self, websocket: WebSocket, message: dict):
         """Handle streaming text + audio response"""
-        from routes.settings import get_groq_api_key
+        from .routes.settings import get_groq_api_key
         from groq import AsyncGroq
         
         # Check if this is an audio request

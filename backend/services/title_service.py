@@ -11,7 +11,7 @@ class TitleGenerationService:
     
     def get_client(self, request: Request):
         """Get Groq client with current session's API key"""
-        from routes.settings import get_groq_api_key
+        from ..routes.settings import get_groq_api_key
         api_key = get_groq_api_key(request)
         if not api_key:
             raise ValueError("Please configure your Groq API key in Settings")

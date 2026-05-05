@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from database.config import get_db
-from services.chat_service import ChatService
-from services.speech_service import SpeechService
-from services.title_service import TitleGenerationService
-from utils.schemas import TextChatRequest, ChatResponse
+from ..database.config import get_db
+from ..services.chat_service import ChatService
+from ..services.speech_service import SpeechService
+from ..services.title_service import TitleGenerationService
+from ..utils.schemas import TextChatRequest, ChatResponse
 from pydantic import BaseModel
 import uuid
 import os

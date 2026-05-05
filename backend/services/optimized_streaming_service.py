@@ -13,7 +13,7 @@ class OptimizedStreamingService:
     @property
     def groq_client(self):
         """Get Groq client with current API key"""
-        from routes.settings import get_groq_api_key
+        from ..routes.settings import get_groq_api_key
         api_key = get_groq_api_key()
         if not api_key:
             raise ValueError("Please configure your Groq API key in Settings")

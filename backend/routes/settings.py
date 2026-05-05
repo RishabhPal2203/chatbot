@@ -36,8 +36,24 @@ async def set_api_key(request: Request, response: Response, api_request: APIKeyR
     
     api_key = api_request.api_key.strip()
     
-    if len(api_key) < 20:
-        raise HTTPException(status_code=400, detail="API key seems too short")
+    # Validate Groq API key format (must start with 'gsk_')
+    if not api_key.startswith("gsk_"):
+        raise HTTPException(
+            status_code=400, 
+            detail="Invalid API key. Groq API keys must start with 'gsk_'. Get your API key from https://console.groq.com/keys"
+        )
+    
+    # Groq keys are typically 51+ characters
+    if len(api_key) < 40:
+        raise HTTPException(status_code=400, detail="API key seems too short for a Groq key")
+    
+    # Validate character set (alphanumeric + underscore after prefix)
+    import re
+    if not re.match(r'^gsk_[A-Za-z0-9]+$', api_key):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid API key format. Groq API keys should only contain letters, numbers, and the 'gsk_' prefix"
+        )
     
     session_id = get_or_create_session(request, response)
     api_key_sessions[session_id] = api_key
