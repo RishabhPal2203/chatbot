@@ -36,13 +36,14 @@ async def stream_chat(chat_request: TextChatRequest, request: Request, db: Sessi
     async def generate():
         full_response = ""
         try:
-            async for chunk in chat_service.stream_message(chat_request.message, session_id, request):
+            async for chunk in chat_service.stream_message(chat_request.message, session_id, request, chat_request.api_key):
                 full_response += chunk
                 yield f"data: {json.dumps({'token': chunk})}\n\n"
             
             # Save to database after streaming completes
-            intent = chat_service.detect_intent(chat_request.message)
-            chat_service.save_conversation(chat_request.message, full_response, intent, session_id, db)
+            if full_response:
+                intent = chat_service.detect_intent(chat_request.message)
+                chat_service.save_conversation(chat_request.message, full_response, intent, session_id, db)
             
             yield f"data: {json.dumps({'done': True, 'session_id': session_id})}\n\n"
         except Exception as e:
@@ -53,7 +54,7 @@ async def stream_chat(chat_request: TextChatRequest, request: Request, db: Sessi
 @router.post("/text", response_model=ChatResponse)
 def text_chat(chat_request: TextChatRequest, request: Request, db: Session = Depends(get_db)):
     session_id = chat_request.session_id or str(uuid.uuid4())
-    result = chat_service.process_message(chat_request.message, session_id, db, request)
+    result = chat_service.process_message(chat_request.message, session_id, db, request, chat_request.api_key)
     
     audio_path = speech_service.text_to_speech(result["response"])
     audio_url = f"/audio/{os.path.basename(audio_path)}"
@@ -76,7 +77,7 @@ async def voice_chat(audio: UploadFile = File(...), session_id: str = None, db: 
         
         text = speech_service.speech_to_text(temp_path)
         session_id = session_id or str(uuid.uuid4())
-        result = chat_service.process_message(text, session_id, db)
+        result = chat_service.process_message(text, session_id, db, None)
         
         audio_path = speech_service.text_to_speech(result["response"])
         audio_url = f"/audio/{os.path.basename(audio_path)}"

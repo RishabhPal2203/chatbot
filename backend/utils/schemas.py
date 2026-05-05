@@ -4,6 +4,7 @@ from typing import Optional
 class TextChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
+    api_key: Optional[str] = None
 
 class ChatResponse(BaseModel):
     response: str

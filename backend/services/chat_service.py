@@ -32,17 +32,18 @@ Brief intro text.
 
 Be concise, professional, and always use proper formatting."""
     
-    def get_client(self, request: Request):
+    def get_client(self, request: Request, api_key: str = None):
         """Get Groq client with current session's API key"""
         from ..routes.settings import get_groq_api_key
-        api_key = get_groq_api_key(request)
-        if not api_key:
-            raise ValueError("Please configure your Groq API key in Settings")
-        return Groq(api_key=api_key)
+        # Use provided API key, or get from request/session, or environment
+        key = api_key or get_groq_api_key(request) or os.getenv('GROQ_API_KEY', '')
+        if not key:
+            raise ValueError("Please configure your Groq API key in Settings. Get your free API key from https://console.groq.com/keys")
+        return Groq(api_key=key)
     
-    async def stream_message(self, user_input: str, session_id: str, request: Request):
+    async def stream_message(self, user_input: str, session_id: str, request: Request, api_key: str = None):
         """Stream tokens from Groq"""
-        client = self.get_client(request)
+        client = self.get_client(request, api_key)
         stream = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
@@ -109,12 +110,12 @@ Be concise, professional, and always use proper formatting."""
         
         return formatted.strip()
     
-    def process_message(self, user_input: str, session_id: str, db: Session, request: Request) -> dict:
+    def process_message(self, user_input: str, session_id: str, db: Session, request: Request, api_key: str = None) -> dict:
         intent = self.detect_intent(user_input)
         
         # Use Groq for response generation
         try:
-            client = self.get_client(request)
+            client = self.get_client(request, api_key)
             response_obj = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[
