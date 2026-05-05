@@ -5,11 +5,17 @@ from openai import AsyncOpenAI
 
 class OpenAITTSService:
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
-        
+        self.api_key = os.getenv("OPENAI_API_KEY", "")
+        self.client = None
+        if self.api_key:
+            try:
+                self.client = AsyncOpenAI(api_key=self.api_key)
+            except Exception:
+                pass
+                
     async def text_to_speech_stream(self, text: str) -> AsyncGenerator[bytes, None]:
         """Stream audio from OpenAI TTS (faster than ElevenLabs)"""
-        if not self.client.api_key or not text.strip():
+        if not self.client or not text.strip():
             return
             
         start_time = time.time()
