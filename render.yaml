@@ -7,7 +7,7 @@ services:
     name: chatbot-backend
     runtime: python
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: cd backend && python main.py
+    startCommand: python -m backend.main
     envVars:
       - key: DATABASE_URL
         value: sqlite:///./chatbot.db
