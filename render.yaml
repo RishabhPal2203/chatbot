@@ -16,8 +16,6 @@ services:
         value: https://chatbot-frontend.onrender.com
       - key: LOG_LEVEL
         value: INFO
-      - key: PORT
-        value: 8000
     healthCheckPath: /health
 
   # Frontend Static Site (React)
